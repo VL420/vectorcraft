@@ -160,6 +160,8 @@ mod tests_taskbar;
 #[cfg(test)]
 mod tests_transparencygrid;
 #[cfg(test)]
+mod tests_video_rulers;
+#[cfg(test)]
 mod tests_widthtool;
 
 use std::sync::mpsc::{Receiver, Sender};

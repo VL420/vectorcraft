@@ -280,10 +280,11 @@ from G14 and the budget run of G15: **~170–270 h** one agent, ~50–80 h wall 
 
 - **Done:** custom document ruler origin (#1212): corner drag with preview, double-click reset to the active artboard, relative X/Y inputs and native save/reopen.
 - **Done:** View › Rulers › Change to Global / Artboard Rulers (`view.globalRulers`, Cmd+Alt+R): artboard rulers, a new document's, count from the active artboard, each artboard with its own zero point; rulers, X/Y fields and guide readouts follow the mode, which is saved with the document. Estimate unchanged.
+- **Done:** View › Rulers › Show / Hide Video Rulers (`view.videoRulers`): rulers along the active artboard's top and left edges, numbered in pixels from its top-left corner whatever the ruler mode and zero point, shown with or without the window's rulers. Remaining: the per-artboard Video Ruler Pixel Aspect Ratio (square pixels only). Estimate unchanged.
 - **Missing (noted for reporters, 2026-10-14):** custom toolbars (Window › Toolbars › New Toolbar, #1759);
   panel widths kept with a workspace (#1753). Inside the estimate below.
 - **Missing:** multiple windows and Window › Arrange (Cascade, Tile, Float in Window, Consolidate All Windows),
-  panels on another monitor, New View/Edit Views, video rulers.
+  panels on another monitor, New View/Edit Views, the video rulers' pixel aspect ratio (Artboard Options).
 - **Estimate:** 15–25 h.
 
 ## G6 Automation and scripting
@@ -353,6 +354,7 @@ from G14 and the budget run of G15: **~170–270 h** one agent, ~50–80 h wall 
 |---|---|---|
 | 2026-10-18 | minor | Mirror Repeat shows its axis when selected (#2877): drag the line or center handle to move it, drag an end handle to rotate it (Shift: 45°), Escape cancels and each drag is one undo step. Engine and headless canvas gesture regressions passed; native move, rotation and Escape screenshots reviewed. Formatting, Clippy, WASM and repository checks passed; the undo label reuses translated Repeat Options. (#2877) Scores and hours unchanged. |
 | 2026-10-18 | minor | Bounding-box handles take priority where a selected Mirror Repeat axis crosses them; a Top-handle regression confirms scaling of the default repeat. Center and end handles retain their move and rotation behavior. G1 scope and estimate unchanged. |
+| 2026-10-18 | minor | G7: View › Rulers › Show / Hide Video Rulers (`view.videoRulers`): rulers along the active artboard's edges, in pixels from its top-left corner; the pixel aspect ratio remains. Scores and hours unchanged (estimated) |
 | 2026-10-17 | minor | Blend spine Anchor Point conversions, selection/stacking priority and Shift regression coverage (#2544); scores and hours unchanged. Windows native canvas checks and screenshots reviewed in PR #2643. |
 | 2026-10-17 | minor | G12: Background Export progress dialog with Cancel and Continue in Background (#2564); no entry closed, estimates unchanged |
 | 2026-10-16 | minor | Native documents restore transparency grid visibility (#1968); save/open regression covers on/off, old files and SVG; scores and hours unchanged (estimated) |

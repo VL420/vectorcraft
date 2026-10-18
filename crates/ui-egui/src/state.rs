@@ -180,6 +180,10 @@ pub const ICON_PANEL_GROUPS: &[&[&str]] = &[
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ViewFlags {
     pub rulers: bool,
+    /// View › Rulers › Show/Hide Video Rulers: rulers along the active artboard's top and left
+    /// edges, numbered in pixels from its top-left corner.
+    #[serde(default)]
+    pub video_rulers: bool,
     pub grid: bool,
     pub guides: bool,
     pub smart_guides: bool,
@@ -211,6 +215,7 @@ impl Default for ViewFlags {
     fn default() -> Self {
         Self {
             rulers: false,
+            video_rulers: false,
             grid: false,
             guides: true,
             smart_guides: true,

@@ -820,13 +820,21 @@ impl Document {
         let corner = Point::new(ab.rect.x0, ab.rect.y0);
         let offset = self.artboard_ruler_origins.get(&ab.id).copied().unwrap_or(Vec2::ZERO);
         let origin = corner + offset;
-        if origin.is_finite() && origin.x.abs() <= MAX_COORD && origin.y.abs() <= MAX_COORD {
-            origin
-        } else if corner.is_finite() && corner.x.abs() <= MAX_COORD && corner.y.abs() <= MAX_COORD {
-            corner
-        } else {
-            Point::ZERO
-        }
+        if origin.is_finite() && origin.x.abs() <= MAX_COORD && origin.y.abs() <= MAX_COORD { origin } else { Self::bounded_corner(ab) }
+    }
+
+    /// Where View › Rulers › Show Video Rulers measure from with artboard `index` active: that
+    /// artboard's top-left corner (the first artboard's when `index` is out of range), whatever the
+    /// ruler mode and zero point; `None` when the document has no artboard. The corner is the
+    /// global zero point when it is out of the supported range.
+    pub fn video_ruler_origin(&self, index: usize) -> Option<Point> {
+        self.artboards.get(index).or_else(|| self.artboards.first()).map(Self::bounded_corner)
+    }
+
+    /// An artboard's top-left corner, or the global zero point when it is out of the supported range.
+    fn bounded_corner(ab: &Artboard) -> Point {
+        let corner = Point::new(ab.rect.x0, ab.rect.y0);
+        if corner.is_finite() && corner.x.abs() <= MAX_COORD && corner.y.abs() <= MAX_COORD { corner } else { Point::ZERO }
     }
 
     /// A new RGB document with one artboard of `size` and one layer ("Layer 1").

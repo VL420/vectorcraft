@@ -519,6 +519,12 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     ime_output(app, ui.ctx(), &xf);
     crate::place::paint_drop_highlight(app, ui.ctx(), &painter, rect);
 
+    if app.ui.view.video_rulers
+        && app.ui.screen_mode < 3
+        && let Some(d) = app.session.active()
+    {
+        video_rulers(&painter, rect, &xf, &d.doc, app.view().map_or(0, |v| v.artboard), app.hover_doc, &t);
+    }
     if app.ui.view.rulers && app.ui.screen_mode < 3 {
         if let Some(origin) = origin_preview {
             let at = xf.to_screen(origin);
@@ -1626,14 +1632,45 @@ pub(crate) fn ruler_origin_dragging(ctx: &egui::Context) -> bool {
 fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, origin: Point, t: &Tokens) {
     let p = ui.painter();
     let [top, left, corner] = ruler_rects(full);
-    for r in [top, left, corner] {
+    p.rect_filled(corner, 0.0, t.ruler);
+    // Crosshair in the origin box.
+    p.line_segment([corner.center() - vec2(4.0, 0.0), corner.center() + vec2(4.0, 0.0)], Stroke::new(1.0, t.ruler_tick));
+    p.line_segment([corner.center() - vec2(0.0, 4.0), corner.center() + vec2(0.0, 4.0)], Stroke::new(1.0, t.ruler_tick));
+    ruler_strips(p, top, left, xf, hover, unit, origin, t);
+}
+
+/// View › Rulers › Show Video Rulers: a ruler along the top and one along the left edge of
+/// artboard `index`, outside it, numbered in pixels from its top-left corner whatever the ruler
+/// mode and zero point (the rulers' own ticks and labels, [`ruler_strips`]). Clipped to `canvas`.
+fn video_rulers(p: &egui::Painter, canvas: egui::Rect, xf: &Xf, doc: &vectorcraft_doc::Document, index: usize, hover: Option<Point>, t: &Tokens) {
+    let Some(origin) = doc.video_ruler_origin(index) else { return };
+    let Some(ab) = doc.artboards.get(index).or_else(|| doc.artboards.first()) else { return };
+    let [top, left] = video_ruler_rects(xf, ab.rect);
+    if !(top.is_finite() && left.is_finite()) {
+        return;
+    }
+    ruler_strips(&p.with_clip_rect(canvas), top, left, xf, hover, Unit::Pixels, origin, t);
+}
+
+/// The video rulers' top and left strips (screen) for an artboard whose rectangle is `ab`
+/// (document points): just outside its top and left edges, as long as the artboard on screen.
+fn video_ruler_rects(xf: &Xf, ab: Rect) -> [egui::Rect; 2] {
+    let corners = [(ab.x0, ab.y0), (ab.x1, ab.y0), (ab.x0, ab.y1), (ab.x1, ab.y1)].map(|(x, y)| xf.to_screen(Point::new(x, y)));
+    let on_screen = egui::Rect::from_points(&corners);
+    let top = egui::Rect::from_min_max(pos2(on_screen.left(), on_screen.top() - RULER), pos2(on_screen.right(), on_screen.top()));
+    let left = egui::Rect::from_min_max(pos2(on_screen.left() - RULER, on_screen.top()), pos2(on_screen.left(), on_screen.bottom()));
+    [top, left]
+}
+
+/// A top and a left ruler strip, numbered in `unit` from `origin`, with the pointer's position
+/// (`hover`) marked on both.
+#[allow(clippy::too_many_arguments)]
+fn ruler_strips(p: &egui::Painter, top: egui::Rect, left: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, origin: Point, t: &Tokens) {
+    for r in [top, left] {
         p.rect_filled(r, 0.0, t.ruler);
     }
     p.line_segment([top.left_bottom(), top.right_bottom()], Stroke::new(1.0, t.border));
     p.line_segment([left.right_top(), left.right_bottom()], Stroke::new(1.0, t.border));
-    // Crosshair in the origin box.
-    p.line_segment([corner.center() - vec2(4.0, 0.0), corner.center() + vec2(4.0, 0.0)], Stroke::new(1.0, t.ruler_tick));
-    p.line_segment([corner.center() - vec2(0.0, 4.0), corner.center() + vec2(0.0, 4.0)], Stroke::new(1.0, t.ruler_tick));
     // Pick a label step (in `unit`) that gives ≥ 50 px between labels; positions below are in `unit`
     // (`per` points each).
     let per = unit.points();
@@ -1665,7 +1702,7 @@ fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, 
     };
     // The canvas's directions along the screen's x and y.
     let (sn, cs) = xf.rot.sin_cos();
-    let clip_top = p.with_clip_rect(top);
+    let clip_top = p.with_clip_rect(top.intersect(p.clip_rect()));
     ticks(top.left_top(), top.right_top(), vectorcraft_geom::Vec2::new(cs, -sn), &mut |d, x| {
         let sx = top.left() + d;
         clip_top.line_segment([pos2(sx, top.bottom() - tick(x)), pos2(sx, top.bottom())], Stroke::new(1.0, t.ruler_tick));
@@ -1673,7 +1710,7 @@ fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, 
             clip_top.text(pos2(sx + 2.0, top.top() + 1.0), egui::Align2::LEFT_TOP, ruler_label(x, step), font.clone(), t.ruler_tick);
         }
     });
-    let clip_left = p.with_clip_rect(left);
+    let clip_left = p.with_clip_rect(left.intersect(p.clip_rect()));
     ticks(left.left_top(), left.left_bottom(), vectorcraft_geom::Vec2::new(sn, cs), &mut |d, y| {
         let sy = left.top() + d;
         clip_left.line_segment([pos2(left.right() - tick(y), sy), pos2(left.right(), sy)], Stroke::new(1.0, t.ruler_tick));
